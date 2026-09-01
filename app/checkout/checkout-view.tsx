@@ -1,23 +1,18 @@
 // app/checkout/checkout-view.tsx
-// Collects fulfilment details and hands a PreorderRequest to lib/payment.
-// No payment is taken here and no order is stored: lib/payment is the only
-// place that needs to change when a provider is connected.
+// Collects fulfilment details, saves the order, and redirects to EFT instructions.
 
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import { formatZar, getProduct } from "@/lib/products";
-import {
-  PAYMENTS_ENABLED,
-  startPreorderCheckout,
-  type Customer,
-  type PreorderLine,
-} from "@/lib/payment";
+import { startPreorderCheckout, type Customer, type PreorderLine } from "@/lib/payment";
 import { Field } from "./field";
 
 export function CheckoutView() {
+  const router = useRouter();
   const { lines, subtotal, ready, clear } = useCart();
   const [notice, setNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -36,7 +31,6 @@ export function CheckoutView() {
     ];
   });
 
-  // Side effect: may redirect to a hosted payment page once payments are live.
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -52,6 +46,7 @@ export function CheckoutView() {
     };
 
     setSubmitting(true);
+    setNotice(null);
     const result = await startPreorderCheckout({
       customer,
       lines: orderLines,
@@ -60,6 +55,11 @@ export function CheckoutView() {
     });
     setSubmitting(false);
 
+    if (result.status === "eft") {
+      clear();
+      router.push(`/order/${result.reference}`);
+      return;
+    }
     if (result.status === "redirect") {
       clear();
       window.location.assign(result.url);
@@ -90,17 +90,15 @@ export function CheckoutView() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-20">
       <h1 className="display text-4xl sm:text-6xl">Checkout</h1>
-      <p className="label mt-3 text-paper-dim">Drop 001 · Pre-order</p>
+      <p className="label mt-3 text-paper-dim">Drop 001 · Pre-order · EFT</p>
 
-      {!PAYMENTS_ENABLED ? (
-        <p className="mt-6 max-w-xl border border-gold p-4 text-sm text-paper-dim">
-          Payment is not connected yet. Final production timing will be confirmed before checkout
-          goes live.
-        </p>
-      ) : null}
+      <p className="mt-6 max-w-xl text-sm text-paper-dim">
+        Place your pre-order below. You will get FNB bank details and a unique payment reference on
+        the next screen. Card checkout via Paystack will be added once the account is verified.
+      </p>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:gap-14">
-        <form onSubmit={handleSubmit} noValidate={false}>
+        <form className="min-w-0 lg:col-start-1 lg:row-start-1" onSubmit={handleSubmit} noValidate={false}>
           <fieldset className="border-t border-line pt-6">
             <legend className="sr-only">Contact details</legend>
             <h2 className="label text-gold">Contact</h2>
@@ -155,7 +153,7 @@ export function CheckoutView() {
             disabled={submitting}
             className="label mt-10 w-full border border-paper bg-paper px-6 py-4 text-ink transition-colors hover:border-gold hover:bg-gold disabled:opacity-50"
           >
-            {PAYMENTS_ENABLED ? "[ Pay now ]" : "[ Continue to payment ]"}
+            {submitting ? "Placing pre-order…" : "[ Place pre-order ]"}
           </button>
 
           <p aria-live="polite" className="mt-4 min-h-6 text-sm text-gold">
@@ -163,7 +161,7 @@ export function CheckoutView() {
           </p>
         </form>
 
-        <aside className="border border-line p-5 lg:sticky lg:top-24 lg:self-start">
+        <aside className="order-first min-w-0 border border-line p-5 lg:order-none lg:col-start-2 lg:row-start-1 lg:sticky lg:top-24 lg:self-start">
           <h2 className="label text-paper-dim">Order</h2>
           <ul className="mt-5 space-y-4">
             {orderLines.map((line) => (

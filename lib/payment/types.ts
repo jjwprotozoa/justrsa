@@ -1,8 +1,8 @@
 // lib/payment/types.ts
-// Shared shapes for the pre-order checkout. Kept free of any provider specifics
-// so swapping payment gateways never touches the UI.
+// Shared shapes for the pre-order checkout.
 
 import type { Size } from "../products";
+import type { EftDetails } from "./eft";
 
 export type Customer = {
   fullName: string;
@@ -34,8 +34,14 @@ export type PreorderRequest = {
 
 export type PreorderResult =
   | {
+      status: "eft";
+      orderId: string;
+      reference: string;
+      total: number;
+      eft: EftDetails;
+    }
+  | {
       status: "redirect";
-      /** Hosted payment page supplied by the provider. */
       url: string;
     }
   | {
@@ -46,3 +52,5 @@ export type PreorderResult =
       status: "error";
       message: string;
     };
+
+export type { EftDetails };

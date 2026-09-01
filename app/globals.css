@@ -33,6 +33,13 @@
     overflow-x: hidden;
   }
 
+  fieldset {
+    border: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+
   ::selection {
     background-color: var(--color-gold);
     color: var(--color-ink);
