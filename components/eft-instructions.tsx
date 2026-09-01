@@ -39,7 +39,7 @@ export function EftInstructions(props: EftInstructionsProps) {
         <p className="label text-gold">Payment received</p>
         <p className="mt-3 text-sm text-paper-dim">
           Reference <span className="font-mono text-paper">{props.reference}</span> is marked paid.
-          We will confirm production timing by email.
+          We will confirm production timing soon.
         </p>
       </div>
     );
