@@ -148,6 +148,11 @@ function parseReference(text: string): string | null {
   return REFERENCE_PATTERN.test(reference) ? reference : null;
 }
 
+/** Telegram may send `/order@justrsa_bot` — strip the @suffix before matching. */
+function commandName(raw: string): string {
+  return raw.split("@")[0]?.toLowerCase() ?? raw.toLowerCase();
+}
+
 async function reply(chatId: number, text: string): Promise<void> {
   await telegramApi("sendMessage", {
     chat_id: chatId,
@@ -179,7 +184,7 @@ async function handleCommand(message: NonNullable<TelegramUpdate["message"]>): P
   if (!text.startsWith("/")) return;
 
   const [command, ...args] = text.split(/\s+/);
-  const lower = command.toLowerCase();
+  const lower = commandName(command);
 
   if (lower === "/start" || lower === "/help") {
     await reply(
@@ -264,12 +269,23 @@ async function handleCallback(
 }
 
 export async function handleTelegramUpdate(update: TelegramUpdate): Promise<void> {
-  if (update.callback_query) {
-    await handleCallback(update.callback_query);
-    return;
-  }
-  if (update.message) {
-    await handleCommand(update.message);
+  try {
+    if (update.callback_query) {
+      await handleCallback(update.callback_query);
+      return;
+    }
+    if (update.message) {
+      await handleCommand(update.message);
+    }
+  } catch (error) {
+    const chatId =
+      update.callback_query?.message?.chat.id ?? update.message?.chat.id;
+    console.error("[telegram]", error instanceof Error ? error.message : error);
+    if (chatId && isAuthorizedChat(chatId)) {
+      await reply(chatId, "Something went wrong. Try again or check /admin.").catch(
+        () => {},
+      );
+    }
   }
 }
 
