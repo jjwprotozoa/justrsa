@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "placeholders": "node scripts/generate-product-placeholders.mjs",
     "orders": "node scripts/orders.mjs",
-    "orders:list": "node scripts/orders.mjs list"
+    "orders:list": "node scripts/orders.mjs list",
+    "telegram:webhook": "node scripts/telegram-webhook.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",

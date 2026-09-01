@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { createOrder, validateAndTotal } from "@/lib/orders";
 import { eftConfigured, getEftDetails } from "@/lib/payment/eft";
+import { notifyNewOrder } from "@/lib/telegram";
 import type { PreorderRequest } from "@/lib/payment/types";
 import { getProduct, SIZES } from "@/lib/products";
 
@@ -107,6 +108,8 @@ export async function POST(request: Request) {
     if (!eft) {
       return NextResponse.json({ error: "EFT payment is not configured." }, { status: 503 });
     }
+
+    notifyNewOrder(stored);
 
     return NextResponse.json({
       orderId: stored.order.id,

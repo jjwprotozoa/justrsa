@@ -2,7 +2,8 @@
 // Accepts a proof-of-payment upload (image or PDF) for an awaiting EFT order.
 
 import { NextResponse } from "next/server";
-import { attachProofOfPayment, MAX_PROOF_BYTES } from "@/lib/orders";
+import { attachProofOfPayment, getOrderByReference, MAX_PROOF_BYTES } from "@/lib/orders";
+import { notifyProofUploaded } from "@/lib/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,6 +39,9 @@ export async function POST(request: Request, context: RouteContext) {
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
+
+  const stored = await getOrderByReference(reference);
+  if (stored) notifyProofUploaded(stored);
 
   return NextResponse.json({
     ok: true,
