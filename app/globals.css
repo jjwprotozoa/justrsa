@@ -1,0 +1,358 @@
+/* app/globals.css — Tailwind v4 entry point and the JUST RSA design tokens. */
+
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0b0b0b;
+  --color-ink-soft: #171717;
+  --color-paper: #efeae1;
+  --color-paper-dim: #b9b3a8;
+  --color-gold: #b07c2a;
+  --color-line: #2a2a2a;
+
+  --font-display: var(--font-oswald), "Arial Narrow", "Helvetica Neue", sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --breakpoint-xs: 24rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: var(--color-gold);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 3px;
+  }
+}
+
+@utility display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 0.88;
+  letter-spacing: -0.01em;
+}
+
+/* Small uppercase metadata label. */
+@utility label {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Fixed film-grain overlay. Static SVG noise, no animation, no image request. */
+@utility grain {
+  position: relative;
+}
+
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------------------------------------------------------------------------
+   Flyover scene (components/flyover.tsx)
+   Two jets crossing a stadium bowl. Flat fills, no gradients, no easing tricks.
+--------------------------------------------------------------------------- */
+
+.flyover .stadium {
+  fill: none;
+  stroke: var(--color-paper);
+  stroke-opacity: 0.16;
+  stroke-width: 1.5;
+}
+
+.flyover .horizon {
+  stroke: var(--color-paper);
+  stroke-opacity: 0.12;
+  stroke-width: 1;
+}
+
+.flyover .jet-lead .airframe,
+.flyover .jet-wing .airframe {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.flyover .jet-lead .airframe {
+  transform: scale(1.75);
+}
+
+.flyover .jet-wing .airframe {
+  transform: scale(1.55);
+}
+
+.flyover .jet-lead .airframe path {
+  fill: var(--color-gold);
+  fill-opacity: 0.9;
+}
+
+.flyover .jet-wing .airframe path {
+  fill: var(--color-paper);
+  fill-opacity: 0.88;
+}
+
+.flyover .trail {
+  transform-box: fill-box;
+  transform-origin: right center;
+}
+
+.flyover .jet-lead .trail {
+  fill: var(--color-gold);
+  fill-opacity: 0.45;
+}
+
+.flyover .jet-wing .trail {
+  fill: var(--color-paper);
+  fill-opacity: 0.22;
+}
+
+.flyover .trail-outer {
+  fill-opacity: 0.14;
+}
+
+/* Firework bursts off the rim. */
+.flyover .firework line {
+  stroke: var(--color-gold);
+  stroke-width: 2;
+  stroke-dasharray: 34 160;
+  stroke-dashoffset: -34;
+}
+
+.flyover .firework-b line {
+  stroke: var(--color-paper);
+  stroke-opacity: 0.7;
+}
+
+.flyover .firework {
+  transform: scale(1);
+}
+
+/* Confetti off the rim. */
+.flyover .confetto {
+  fill: var(--color-paper);
+  fill-opacity: 0.75;
+  transform: translate(calc(var(--cx) + var(--dx) / 2), calc(var(--cy) + var(--apex)))
+    rotate(calc(var(--spin) / 2));
+}
+
+.flyover .confetto-gold {
+  fill: var(--color-gold);
+  fill-opacity: 0.95;
+}
+
+/*
+ * Static positions are the baseline: with reduced motion the jets simply sit
+ * mid-flight with their trails drawn. Motion is layered on top below.
+ */
+/* Reduced motion: both jets parked mid-formation over the bowl. */
+.flyover .jet-lead {
+  --jet-y: 82px;
+  transform: translate(520px, var(--jet-y));
+}
+
+.flyover .jet-wing {
+  --jet-y: 118px;
+  transform: translate(260px, var(--jet-y));
+}
+
+/*
+ * One 5.5s pass per play. Replays are triggered in flyover.tsx (hover, touch,
+ * scroll re-entry) by remounting .flyover-motion — no long idle loop.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .flyover-motion .jet {
+    animation: jet-cross 5.5s cubic-bezier(0.35, 0, 0.45, 1) 1 forwards;
+  }
+
+  .flyover-motion .jet .trail {
+    animation: trail-draw 5.5s linear 1 forwards;
+  }
+
+  .flyover-motion .jet-wing,
+  .flyover-motion .jet-wing .trail {
+    animation-delay: 0.8s;
+  }
+
+  .flyover-motion .firework {
+    animation: firework-burst 5.5s linear 1 forwards;
+  }
+
+  .flyover-motion .firework line {
+    animation: firework-spoke 5.5s linear 1 forwards;
+  }
+
+  .flyover-motion .firework-b,
+  .flyover-motion .firework-b line {
+    animation-delay: 0.35s;
+  }
+
+  .flyover-motion .firework-c,
+  .flyover-motion .firework-c line {
+    animation-delay: 0.75s;
+  }
+
+  .flyover-motion .confetto {
+    animation: confetti-fly 5.5s linear 1 forwards;
+    animation-delay: var(--delay);
+  }
+}
+
+@keyframes jet-cross {
+  0% {
+    transform: translate(-280px, var(--jet-y));
+  }
+  48% {
+    transform: translate(1460px, var(--jet-y));
+  }
+  100% {
+    transform: translate(1460px, var(--jet-y));
+  }
+}
+
+@keyframes trail-draw {
+  0% {
+    transform: scaleX(0);
+  }
+  10% {
+    transform: scaleX(1);
+  }
+  48% {
+    transform: scaleX(1);
+  }
+  50%,
+  100% {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes firework-burst {
+  0%,
+  16% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(0.85);
+  }
+  32% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  42% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+  43%,
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes firework-spoke {
+  0%,
+  16% {
+    stroke-dashoffset: 34;
+  }
+  32% {
+    stroke-dashoffset: -44;
+  }
+  42%,
+  100% {
+    stroke-dashoffset: -124;
+  }
+}
+
+@keyframes confetti-fly {
+  0%,
+  17% {
+    opacity: 0;
+    transform: translate(var(--cx), var(--cy)) scale(0.4);
+    animation-timing-function: cubic-bezier(0.12, 0.8, 0.4, 1);
+  }
+  19% {
+    opacity: 1;
+    transform: translate(var(--cx), var(--cy)) scale(1);
+    animation-timing-function: cubic-bezier(0.12, 0.8, 0.4, 1);
+  }
+  34% {
+    opacity: 1;
+    transform: translate(calc(var(--cx) + var(--dx) / 2), calc(var(--cy) + var(--apex)))
+      rotate(calc(var(--spin) / 2));
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.6);
+  }
+  52% {
+    opacity: 0;
+    transform: translate(calc(var(--cx) + var(--dx)), calc(var(--cy) + var(--fall)))
+      rotate(var(--spin));
+  }
+  53%,
+  100% {
+    opacity: 0;
+    transform: translate(var(--cx), var(--cy)) scale(0.4);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Entrances
+--------------------------------------------------------------------------- */
+
+/* Plays once on load. Used for the hero, which is above the fold. */
+@utility rise {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * Scroll-linked reveal. Progressive enhancement only: browsers without view
+ * timelines simply render the element in its final state, no JS observers.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 22%;
+    }
+  }
+}
